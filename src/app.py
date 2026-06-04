@@ -30,52 +30,48 @@ class NetworkSimulator:
 # ==========================================
 # 1. DỮ LIỆU MÔ PHỎNG
 # ==========================================
-SAMPLE_AUTHORS = [
-    "Nguyen Van A", "Tran Thi B", "Le Van C", "Pham Minh D",
-    "Hoang Anh E", "Vo Thanh F", "Dang Quoc G", "Bui Xuan H",
-    "James Smith", "Emily Johnson", "Michael Brown", "Sarah Davis",
-    "Robert Wilson", "Maria Garcia", "David Martinez", "Lisa Anderson",
-    "Haruki Murakami", "J.K. Rowling", "Paulo Coelho", "Dan Brown",
-]
-
-SAMPLE_TITLE_PREFIXES = [
-    "Introduction to", "Advanced", "Modern", "Fundamentals of",
-    "Principles of", "A Guide to", "Exploring", "Mastering",
-    "Understanding", "The Art of", "Deep Dive into", "Practical",
-]
-
-SAMPLE_TITLE_SUBJECTS = [
-    "Database Systems", "Machine Learning", "Web Development",
-    "Distributed Computing", "Artificial Intelligence", "Data Science",
-    "Cloud Architecture", "Network Security", "Software Engineering",
-    "Computer Vision", "Natural Language Processing", "Blockchain",
-    "Quantum Computing", "Algorithms", "Operating Systems",
-    "Digital Humanities", "Bioinformatics", "Robotics",
-]
-
 
 def generate_xml_fragments(num_books_total=30000, num_fragments=3):
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(current_dir)
+    csv_path = os.path.join(project_root, "Books.csv")
+    
+    # Read the CSV file
+    df = pd.read_csv(csv_path, encoding='utf-8')
+    
+    # Take the first num_books_total records
+    df = df.head(num_books_total)
+    
     fragments = []
     books_per_fragment = num_books_total // num_fragments
-    book_id = 1
+    
     for frag_idx in range(num_fragments):
         root = ET.Element("library")
-        for _ in range(books_per_fragment):
+        start_idx = frag_idx * books_per_fragment
+        end_idx = start_idx + books_per_fragment
+        
+        for idx in range(start_idx, end_idx):
+            row = df.iloc[idx]
+            book_id = idx + 1
             book = ET.SubElement(root, "book", id=str(book_id))
+            
             title = ET.SubElement(book, "title")
-            prefix = random.choice(SAMPLE_TITLE_PREFIXES)
-            subject = random.choice(SAMPLE_TITLE_SUBJECTS)
-            title.text = f"{prefix} {subject} Vol.{book_id}"
+            title.text = str(row["Book-Title"]) + " vol " + str(frag_idx + 1)
+            
             author = ET.SubElement(book, "author")
-            author.text = random.choice(SAMPLE_AUTHORS)
+            author.text = str(row["Book-Author"])
+            
             year = ET.SubElement(book, "year")
-            year.text = str(random.randint(2000, 2025))
+            year.text = str(row["Year-Of-Publication"])
+            
             chapters = ET.SubElement(book, "chapters")
-            chapters.text = str(random.randint(5, 30))
+            chapters.text = str(random.randint(5, 40))
+            
             citations = ET.SubElement(book, "citations")
-            citations.text = str(random.randint(0, 500))
-            book_id += 1
+            citations.text = str(random.randint(0, 1000))
+        
         fragments.append(root)
+    
     return fragments
 
 
@@ -294,12 +290,12 @@ def main():
         st.markdown("---")
         st.header("Gợi ý truy vấn")
         suggested_queries = [
-            "/library/book[year>2020]/title",
+            "/library/book[year>2000]/title",
             "/library/book[citations>200]/author",
             "/library/book[chapters<10]/title",
-            "/library/book[year>=2022 and citations>=100]/title",
-            "/library/book[year>=2024 or citations>=400]/author",
-            "/library/book[author='Dan Brown']/title",
+            "/library/book[year>=2002 and citations>=100]/title",
+            "/library/book[year>=2004 or citations>=400]/author",
+            "/library/book[author='J. K. Rowling']/title",
             "/library/book/title"
         ]
         selected_query = st.selectbox("Chọn truy vấn mẫu", suggested_queries)
