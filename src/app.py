@@ -34,43 +34,29 @@ class NetworkSimulator:
 def generate_xml_fragments(num_books_total=30000, num_fragments=3):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(current_dir)
-    csv_path = os.path.join(project_root, "Books.csv")
+    large_xml_path = os.path.join(project_root, "Books.xml")
     
-    # Read the CSV file
-    df = pd.read_csv(csv_path, encoding='utf-8')
+    # Read the large XML file (as per requirements)
+    tree = ET.parse(large_xml_path)
+    root = tree.getroot()
+    all_books = root.findall("book")
     
     # Take the first num_books_total records
-    df = df.head(num_books_total)
+    all_books = all_books[:num_books_total]
     
     fragments = []
     books_per_fragment = num_books_total // num_fragments
     
     for frag_idx in range(num_fragments):
-        root = ET.Element("library")
+        frag_root = ET.Element("library")
         start_idx = frag_idx * books_per_fragment
         end_idx = start_idx + books_per_fragment
         
+        # Append books to this fragment
         for idx in range(start_idx, end_idx):
-            row = df.iloc[idx]
-            book_id = idx + 1
-            book = ET.SubElement(root, "book", id=str(book_id))
-            
-            title = ET.SubElement(book, "title")
-            title.text = str(row["Book-Title"]) + " vol " + str(frag_idx + 1)
-            
-            author = ET.SubElement(book, "author")
-            author.text = str(row["Book-Author"])
-            
-            year = ET.SubElement(book, "year")
-            year.text = str(row["Year-Of-Publication"])
-            
-            chapters = ET.SubElement(book, "chapters")
-            chapters.text = str(random.randint(5, 40))
-            
-            citations = ET.SubElement(book, "citations")
-            citations.text = str(random.randint(0, 1000))
+            frag_root.append(all_books[idx])
         
-        fragments.append(root)
+        fragments.append(frag_root)
     
     return fragments
 
